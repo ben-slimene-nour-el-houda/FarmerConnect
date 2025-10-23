@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - AgriWie</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff5722;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6em;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .user-menu:hover {
+            background: #f0f0f0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d8659;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .sidebar h3 {
+            color: #2d8659;
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: #f0f8f4;
+        }
+
+        .menu-item.active {
+            background: #2d8659;
+            color: white;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #2d8659 0%, #1a5c3d 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-banner h1 {
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2.5em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d8659;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Orders Table */
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .orders-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .orders-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-delivered {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-transit {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-cancelled {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-right: 5px;
+            transition: background 0.3s;
+        }
+
+        .view-btn {
+            background: #2d8659;
+            color: white;
+        }
+
+        .view-btn:hover {
+            background: #236b47;
+        }
+
+        .cancel-btn {
+            background: #ff5722;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #e64a19;
+        }
+
+        .cancel-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal h2 {
+            color: #2d8659;
+            margin-bottom: 1rem;
+        }
+
+        .modal-details {
+            margin-bottom: 1rem;
+        }
+
+        .modal-details strong {
+            color: #333;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            position: relative;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .alert-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .orders-table {
+                font-size: 0.9em;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="navigateTo('dashboard')" role="button" tabindex="0" aria-label="Go to Dashboard">🌾 AgriWie</div>
+            <div class="header-right">
+                <div class="cart-icon" onclick="navigateTo('cart')" role="button" tabindex="0" aria-label="View Cart">
+                    🛒
+                    <span id="cartBadge" class="cart-badge">0</span>
+                </div>
+                <div class="user-menu" role="button" tabindex="0" aria-label="User Menu">
+                    <div class="user-avatar" id="userAvatar"></div>
+                    <span id="userName"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <h3>My Space</h3>
+            <div class="menu-item" onclick="navigateTo('dashboard')" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">🏠 Dashboard</div>
+            <div class="menu-item active" onclick="navigateTo('orders')" data-page="orders" role="button" tabindex="0" aria-label="Orders">📦 Orders</div>
+            <div class="menu-item" onclick="navigateTo('favorites')" data-page="favorites" role="button" tabindex="0" aria-label="Favorites">❤️ Favorites</div>
+            <div class="menu-item" onclick="navigateTo('cart')" data-page="cart" role="button" tabindex="0" aria-label="Cart">🛒 Cart</div>
+            <div class="menu-item" onclick="navigateTo('profile')" data-page="profile" role="button" tabindex="0" aria-label="Profile">👤 Profile</div>
+            <button class="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+        <div class="main-content">
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()" aria-label="Close Alert">✖</button>
+            </div>
+            <div class="welcome-banner">
+                <h1>My Orders</h1>
+                <p>Manage and track your order history.</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value" id="totalOrders">0</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🚚</div>
+                    <div class="stat-value" id="inProgressOrders">0</div>
+                    <div class="stat-label">Orders in Progress</div>
+                </div>
+            </div>
+            <div class="section-title">
+                <span>Order History</span>
+            </div>
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Products</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for order details -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Order Details</h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.firebasestorage.app",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TND' });
+
+        // App Data
+        const appData = {
+            currentUser: null,
+            orders: [],
+            cart: []
+        };
+
+        // Get Current User
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    unsubscribe();
+                    if (user) {
+                        appData.currentUser = { uid: user.uid };
+                        db.collection('users').doc(user.uid).get().then(doc => {
+                            if (doc.exists) {
+                                const userData = doc.data();
+                                appData.currentUser.prenom = userData.prenom;
+                                appData.currentUser.nom = userData.nom;
+                                document.getElementById('userName').textContent = `${userData.prenom} ${userData.nom}`;
+                                document.getElementById('userAvatar').textContent = userData.prenom.charAt(0) + userData.nom.charAt(0);
+                            }
+                        });
+                        resolve(user.uid);
+                    } else {
+                        window.location.href = 'login.html';
+                        reject('Not authenticated');
+                    }
+                });
+            });
+        }
+
+        // Load Cart from Firestore
+        async function loadCart(uid) {
+            try {
+                const cartSnapshot = await db.collection('users').doc(uid).collection('cart').get();
+                appData.cart = cartSnapshot.docs.map(doc => doc.data());
+                updateCartBadge();
+            } catch (error) {
+                showAlert('Error loading cart: ' + error.message, 'error');
+            }
+        }
+
+        // Load Orders from Firestore
+        async function loadOrders(uid) {
+            try {
+                const ordersSnapshot = await db.collection('users').doc(uid).collection('orders').orderBy('date', 'desc').get();
+                appData.orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderOrders();
+                updateStats();
+            } catch (error) {
+                showAlert('Error loading orders: ' + error.message, 'error');
+            }
+        }
+
+        // Update Cart Badge
+        function updateCartBadge() {
+            const totalItems = appData.cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartBadge').textContent = totalItems;
+        }
+
+        // Update Stats
+        function updateStats() {
+            const totalOrders = appData.orders.length;
+            const inProgressOrders = appData.orders.filter(o => o.status === 'pending' || o.status === 'transit').length;
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('inProgressOrders').textContent = inProgressOrders;
+        }
+
+        // Render Orders
+        function renderOrders() {
+            const ordersTableBody = document.getElementById('ordersTableBody');
+            ordersTableBody.innerHTML = '';
+
+            if (appData.orders.length === 0) {
+                ordersTableBody.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>';
+                return;
+            }
+
+            appData.orders.forEach(order => {
+                const productNames = order.products.map(p => `${p.name} (${p.quantity} ${p.unit})`).join(', ');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${new Date(order.date).toLocaleDateString('en-US')}</td>
+                    <td>${productNames}</td>
+                    <td>${formatter.format(order.total)}</td>
+                    <td><span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                    <td>
+                        <button class="action-btn view-btn" onclick="showOrderDetails('${order.id}')" aria-label="View details of order ${order.id}">View</button>
+                        ${order.status === 'pending' ? `<button class="action-btn cancel-btn" onclick="cancelOrder('${order.id}')" aria-label="Cancel order ${order.id}">Cancel</button>` : ''}
+                    </td>
+                `;
+                ordersTableBody.appendChild(row);
+            });
+        }
+
+        // Show Order Details in Modal
+        async function showOrderDetails(orderId) {
+            try {
+                const order = appData.orders.find(o => o.id === orderId);
+                if (!order) {
+                    showAlert('Order not found.', 'error');
+                    return;
+                }
+                const productDetails = order.products.map(p => `<div><strong>${p.name}</strong>: ${p.quantity} ${p.unit} at ${formatter.format(p.price)}/unit</div>`).join('');
+                document.getElementById('modalTitle').textContent = `Order #${orderId}`;
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="modal-details"><strong>Date:</strong> ${new Date(order.date).toLocaleDateString('en-US')}</div>
+                    <div class="modal-details"><strong>Total:</strong> ${formatter.format(order.total)}</div>
+                    <div class="modal-details"><strong>Products:</strong><br>${productDetails}</div>
+                    <div class="modal-details"><strong>Status:</strong> <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></div>
+                `;
+                document.getElementById('orderModal').style.display = 'block';
+            } catch (error) {
+                showAlert('Error loading order details: ' + error.message, 'error');
+            }
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        // Cancel Order
+        async function cancelOrder(orderId) {
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            try {
+                const uid = appData.currentUser.uid;
+                await db.collection('users').doc(uid).collection('orders').doc(orderId).update({ status: 'cancelled' });
+                showAlert('Order cancelled successfully!', 'success');
+                await loadOrders(uid);
+            } catch (error) {
+                showAlert('Error cancelling order: ' + error.message, 'error');
+            }
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            const pageMap = {
+                'dashboard': 'dashboard_customer.html',
+                'orders': 'orders.html',
+                'favorites': 'favorites.html',
+                'cart': 'cart.html',
+                'profile': 'profile.html'
+            };
+            if (pageMap[page]) {
+                window.location.href = pageMap[page];
+            }
+        }
+
+        // Show Alert
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 4000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        // Logout
+        async function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                try {
+                    await auth.signOut();
+                    showAlert('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } catch (error) {
+                    showAlert('Error logging out: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                await loadCart(uid);
+                await loadOrders(uid);
+            } catch (error) {
+                showAlert('Error initializing app: ' + error.message, 'error');
+            }
+        }
+
+        initApp();
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('orderModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>

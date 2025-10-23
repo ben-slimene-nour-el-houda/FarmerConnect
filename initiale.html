@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriWie - Agricultural Marketplace</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 1rem 5%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2d8659;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #2d8659;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #2d8659;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #236b47;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #2d8659;
+            border: 2px solid #2d8659;
+        }
+
+        .btn-secondary:hover {
+            background: #2d8659;
+            color: white;
+        }
+
+        /* Header with image */
+        .header-image {
+            position: relative;
+            background-image: url("https://voca-land.sgp1.cdn.digitaloceanspaces.com/-1/1635397034864/market_large_354703739_1000.jpeg");
+            background-size: cover;
+            background-position: center;
+            height: 500px;
+        }
+
+        .header-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .header-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            color: white;
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        .header-content h1 {
+            font-size: 3em;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header-content p {
+            font-size: 1.3em;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Services Section */
+        .services {
+            padding: 4rem 5%;
+            background: #f8f9fa;
+        }
+
+        .services h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 3rem;
+            color: #2d8659;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .service-icon {
+            font-size: 3em;
+            margin-bottom: 1rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 1rem;
+            color: #2d8659;
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 4rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .how-it-works h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 3rem;
+            color: #2d8659;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .step {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: #2d8659;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 3rem 5%;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: #2d8659;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: #ddd;
+            text-decoration: none;
+            line-height: 2;
+        }
+
+        .footer-section a:hover {
+            color: #2d8659;
+        }
+
+        .copyright {
+            border-top: 1px solid #333;
+            padding-top: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content h1 {
+                font-size: 2em;
+            }
+
+            .header-content p {
+                font-size: 1em;
+            }
+
+            nav ul {
+                display: none;
+            }
+
+            .services h2, .how-it-works h2 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">🌾 AgriWie</div>
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#products">Products</a></li>
+            <li><a href="#supplies">Supplies</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+        </ul>
+        <div class="nav-buttons">
+            <a href="login.html" class="btn btn-secondary">Login</a>
+            <a href="inscription.html" class="btn btn-primary">Sign Up</a>
+        </div>
+    </nav>
+
+    <!-- Header with image -->
+    <div class="header-image">
+        <div class="header-content">
+            <h1>The Marketplace Connecting Farmers, Consumers, and Suppliers</h1>
+            <p>Buy fresh local products and find all your agricultural supplies in one place</p>
+            <div class="header-buttons">
+                <a href="login.html" class="btn btn-primary">I am a Supplier</a>
+                <a href="login.html" class="btn btn-secondary">I am a Customer</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <section class="services">
+        <h2>Our Services</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">🛒</div>
+                <h3>For Consumers</h3>
+                <p>Discover and buy fresh, local agricultural products directly from producers in your region.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🚜</div>
+                <h3>For Suppliers</h3>
+                <p>Sell your products online and purchase agricultural supplies (seeds, tools, fertilizers) at the best prices.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">📍</div>
+                <h3>Local Commerce</h3>
+                <p>Geolocation to find products near you and support local agriculture.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Sign Up</h3>
+                <p>Create your account as a supplier or customer in just a few clicks</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Browse</h3>
+                <p>Explore our catalog of fresh products or agricultural supplies</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Order</h3>
+                <p>Add your items to the cart and complete your purchase securely</p>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Receive</h3>
+                <p>Pick up your products or have them delivered directly to you</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>AgriWie</h3>
+                <p>The platform revolutionizing agricultural commerce by connecting producers and consumers.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#products">Products</a></li>
+                    <li><a href="#supplies">Supplies</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="#terms">Terms and Conditions</a></li>
+                    <li><a href="#legal">Legal Notices</a></li>
+                    <li><a href="#gdpr">GDPR</a></li>
+                    <li><a href="#cookies">Cookies</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📧 contact@AgriWie.com</p>
+                <p>📞 +33 1 23 45 67 89</p>
+                <p>📍 Tunis, Tunisia</p>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 AgriWie. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

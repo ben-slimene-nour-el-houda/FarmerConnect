@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Products - AgriWie</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        .user-menu:hover {
+            background: #f0f0f0;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d8659;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .sidebar h3 {
+            color: #2d8659;
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+        }
+        .menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .menu-item:hover {
+            background: #f0f8f4;
+        }
+        .menu-item.active {
+            background: #2d8659;
+            color: white;
+        }
+        .add-product-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .add-product-btn:hover {
+            background: #f57c00;
+        }
+        .logout-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9em;
+        }
+        .filter-tab {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-tab.active {
+            background: #2d8659;
+            color: white;
+            border-color: #2d8659;
+        }
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        .products-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .products-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .product-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .product-mini-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+        .stock-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .stock-high {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .stock-low {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        .stock-out {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .edit-btn {
+            background: #2196f3;
+            color: white;
+            margin-right: 5px;
+        }
+        .edit-btn:hover {
+            background: #1976d2;
+        }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            position: relative;
+        }
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+        .alert-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .products-table {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="navigateTo('dashboard')" role="button" tabindex="0" aria-label="Go to Dashboard">
+                <span>🚜</span>
+                <span>AgriWie Pro</span>
+            </div>
+            <div class="user-menu" role="button" tabindex="0" aria-label="User Menu">
+                <div class="user-avatar" id="userAvatar"></div>
+                <span id="userName"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h3>Navigation</h3>
+            <div class="menu-item" onclick="navigateTo('dashboard')" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">
+                <span>📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="menu-item active" onclick="navigateTo('products')" data-page="products" role="button" tabindex="0" aria-label="My Products">
+                <span>📦</span>
+                <span>My Products</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('orders')" data-page="orders" role="button" tabindex="0" aria-label="Received Orders">
+                <span>🛒</span>
+                <span>Received Orders</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('revenue')" data-page="revenue" role="button" tabindex="0" aria-label="Revenue">
+                <span>💰</span>
+                <span>Revenue</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('statistics')" data-page="statistics" role="button" tabindex="0" aria-label="Statistics">
+                <span>📈</span>
+                <span>Statistics</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('profile')" data-page="profile" role="button" tabindex="0" aria-label="My Profile">
+                <span>👤</span>
+                <span>My Profile</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('settings')" data-page="settings" role="button" tabindex="0" aria-label="Settings">
+                <span>⚙️</span>
+                <span>Settings</span>
+            </div>
+            <button class="add-product-btn" onclick="addProduct()" role="button" aria-label="Add a Product">
+                <span>➕</span>
+                <span>Add a Product</span>
+            </button>
+            <button class="logout-btn" onclick="logout()" role="button" aria-label="Logout">Logout</button>
+        </aside>
+
+        <main class="main-content">
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()" role="button" aria-label="Close Alert">✖</button>
+            </div>
+            <h2 class="section-title">
+                My Products
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="filterProducts('all')" role="button" aria-label="Show All Products">All</div>
+                    <div class="filter-tab" onclick="filterProducts('inStock')" role="button" aria-label="Show In Stock Products">In Stock</div>
+                    <div class="filter-tab" onclick="filterProducts('lowStock')" role="button" aria-label="Show Low Stock Products">Low Stock</div>
+                </div>
+            </h2>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Sold</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <!-- Products will be loaded dynamically -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.firebasestorage.app",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TND' });
+
+        // App Data
+        const appData = {
+            currentUser: null,
+            products: []
+        };
+
+        // Get Current User
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                    unsubscribe();
+                    if (user) {
+                        try {
+                            const userDoc = await db.collection('users').doc(user.uid).get();
+                            if (!userDoc.exists) {
+                                throw new Error('User data not found in Firestore');
+                            }
+                            const userData = userDoc.data();
+                            appData.currentUser = {
+                                uid: user.uid,
+                                prenom: userData.prenom || 'User',
+                                nom: userData.nom || '',
+                                role: userData.role || 'supplier'
+                            };
+                            document.getElementById('userName').textContent = `${appData.currentUser.prenom} ${appData.currentUser.nom}`;
+                            document.getElementById('userAvatar').textContent = appData.currentUser.prenom.charAt(0) + (appData.currentUser.nom ? appData.currentUser.nom.charAt(0) : '');
+                            if (appData.currentUser.role !== 'supplier') {
+                                showAlert('Access restricted to suppliers.', 'error');
+                                setTimeout(() => {
+                                    window.location.href = appData.currentUser.role === 'client' ? 'dashboard_customer.html' : 'login.html';
+                                }, 1500);
+                                reject('Unauthorized role');
+                                return;
+                            }
+                            resolve(user.uid);
+                        } catch (error) {
+                            showAlert('Error fetching user data: ' + error.message, 'error');
+                            setTimeout(() => {
+                                window.location.href = 'login.html';
+                            }, 1500);
+                            reject(error);
+                        }
+                    } else {
+                        showAlert('You must be logged in.', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                        reject('Not authenticated');
+                    }
+                });
+            });
+        }
+
+        // Load Products from Firestore
+        async function loadProducts(uid) {
+            try {
+                const productsSnapshot = await db.collection('users').doc(uid).collection('products').get();
+                appData.products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts(appData.products);
+            } catch (error) {
+                showAlert('Error loading products: ' + error.message, 'error');
+            }
+        }
+
+        // Render Products
+        function renderProducts(products) {
+            const productsTableBody = document.getElementById('productsTableBody');
+            productsTableBody.innerHTML = '';
+            if (products.length === 0) {
+                productsTableBody.innerHTML = '<tr><td colspan="6">No products available.</td></tr>';
+                return;
+            }
+            products.forEach(product => {
+                let stockStatus;
+                if (product.stock > 50) {
+                    stockStatus = 'high';
+                } else if (product.stock > 0) {
+                    stockStatus = 'low';
+                } else {
+                    stockStatus = 'out';
+                }
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="product-mini">
+                            <img src="${product.imagePaths?.[0] || 'https://via.placeholder.com/50x50?text=Image+Not+Found'}" alt="${product.name}" class="product-mini-img">
+                            <span>${product.name}</span>
+                        </div>
+                    </td>
+                    <td>${formatter.format(product.price)}</td>
+                    <td>${product.stock} ${product.unit}</td>
+                    <td>${product.sold || 0} ${product.unit}</td>
+                    <td><span class="stock-badge stock-${stockStatus}">${stockStatus === 'high' ? 'In Stock' : stockStatus === 'low' ? 'Low Stock' : 'Out of Stock'}</span></td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editProduct('${product.id}')">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteProduct('${product.id}')">Delete</button>
+                    </td>
+                `;
+                productsTableBody.appendChild(row);
+            });
+        }
+
+        // Filter Products
+        function filterProducts(filter) {
+            let filteredProducts = appData.products;
+            if (filter === 'inStock') {
+                filteredProducts = appData.products.filter(p => p.stock > 0);
+            } else if (filter === 'lowStock') {
+                filteredProducts = appData.products.filter(p => p.stock > 0 && p.stock <= 50);
+            }
+            renderProducts(filteredProducts);
+        }
+
+        // Add Product
+        function addProduct() {
+            showAlert('Product addition form to be implemented', 'success');
+            // TODO: Implement modal or form
+        }
+
+        // Edit Product
+        function editProduct(productId) {
+            showAlert(`Edit form for product ${productId} to be implemented`, 'success');
+            // TODO: Implement edit form
+        }
+
+        // Delete Product
+        async function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                try {
+                    const uid = appData.currentUser.uid;
+                    await db.collection('users').doc(uid).collection('products').doc(productId).delete();
+                    showAlert('Product deleted successfully', 'success');
+                    await loadProducts(uid);
+                } catch (error) {
+                    showAlert('Error deleting product: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Show Alert
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 4000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            const pageMap = {
+                'dashboard': 'dashboard_fournisseur.html',
+                'products': 'products.html',
+                'orders': 'orders_supplier.html',
+                'revenue': 'revenue.html',
+                'statistics': 'statistics.html',
+                'profile': 'profile.html',
+                'settings': 'settings.html'
+            };
+            if (pageMap[page]) {
+                window.location.href = pageMap[page];
+            } else {
+                showAlert('Page not implemented', 'error');
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                try {
+                    await auth.signOut();
+                    showAlert('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } catch (error) {
+                    showAlert('Error logging out: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                await loadProducts(uid);
+                db.collection('users').doc(uid).collection('products').onSnapshot((snapshot) => {
+                    appData.products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderProducts(appData.products);
+                });
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    if (item.getAttribute('data-page') === 'products') {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            } catch (error) {
+                showAlert('Error initializing app: ' + error.message, 'error');
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>

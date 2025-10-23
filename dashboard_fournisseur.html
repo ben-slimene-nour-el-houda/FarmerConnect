@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Supplier Space - AgriWie</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .user-menu:hover {
+            background: #f0f0f0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d8659;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .sidebar h3 {
+            color: #2d8659;
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: #f0f8f4;
+        }
+
+        .menu-item.active {
+            background: #2d8659;
+            color: white;
+        }
+
+        .add-product-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .add-product-btn:hover {
+            background: #f57c00;
+        }
+
+        .logout-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #2d8659 0%, #1a5c3d 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-banner h1 {
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2.5em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d8659;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9em;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-tab.active {
+            background: #2d8659;
+            color: white;
+            border-color: #2d8659;
+        }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .products-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .products-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .product-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .product-mini-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .stock-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stock-high {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .stock-low {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .stock-out {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .edit-btn {
+            background: #2196f3;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .edit-btn:hover {
+            background: #1976d2;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .orders-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .orders-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-new {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-processing {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-shipped {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .status-delivered {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .chart-container {
+            background: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            position: relative;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .alert-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .modal-content h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .form-group input[type="file"] {
+            padding: 3px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2d8659;
+        }
+
+        .modal-content button[type="submit"] {
+            padding: 10px;
+            background: #2d8659;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .modal-content button[type="submit"]:hover {
+            background: #1a5c3d;
+        }
+
+        .modal-content button[type="submit"]:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #e0e0e0;
+            border-radius: 4px;
+            height: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #2d8659;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9em;
+            color: #333;
+            margin-top: 5px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .products-table {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="navigateTo('dashboard')" role="button" tabindex="0" aria-label="Go to Dashboard">
+                <span>🚜</span>
+                <span>AgriWie Pro</span>
+            </div>
+            <div class="user-menu" role="button" tabindex="0" aria-label="User Menu">
+                <div class="user-avatar" id="userAvatar"></div>
+                <span id="userName"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h3>Navigation</h3>
+            <div class="menu-item active" onclick="navigateTo('dashboard')" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">
+                <span>📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('products')" data-page="products" role="button" tabindex="0" aria-label="My Products">
+                <span>📦</span>
+                <span>My Products</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('orders')" data-page="orders" role="button" tabindex="0" aria-label="Received Orders">
+                <span>🛒</span>
+                <span>Received Orders</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('revenue')" data-page="revenue" role="button" tabindex="0" aria-label="Revenue">
+                <span>💰</span>
+                <span>Revenue</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('statistics')" data-page="statistics" role="button" tabindex="0" aria-label="Statistics">
+                <span>📈</span>
+                <span>Statistics</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('profile')" data-page="profile" role="button" tabindex="0" aria-label="My Profile">
+                <span>👤</span>
+                <span>My Profile</span>
+            </div>
+            
+            <button class="add-product-btn" onclick="addProduct()" role="button" aria-label="Add a Product">
+                <span>➕</span>
+                <span>Add a Product</span>
+            </button>
+            <button class="logout-btn" onclick="logout()" role="button" aria-label="Logout">Logout</button>
+        </aside>
+
+        <main class="main-content">
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()" role="button" aria-label="Close Alert">✖</button>
+            </div>
+            <div class="welcome-banner">
+                <h1>Welcome to your supplier space, <span id="userNameMain"></span>! 🚜</h1>
+                <p>List products that support farmers, manage your products, track your sales, and grow your business</p>
+            </div>
+
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <div class="chart-container">
+                <h3 style="margin-bottom: 1rem;">Sales over the Last 7 Days</h3>
+                <canvas id="salesChart" style="max-height: 250px;"></canvas>
+            </div>
+
+            <h2 class="section-title">
+                My Products
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="filterProducts('all')" role="button" aria-label="Show All Products">All</div>
+                    <div class="filter-tab" onclick="filterProducts('inStock')" role="button" aria-label="Show In Stock Products">In Stock</div>
+                    <div class="filter-tab" onclick="filterProducts('lowStock')" role="button" aria-label="Show Low Stock Products">Low Stock</div>
+                </div>
+            </h2>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Sold</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody"></tbody>
+            </table>
+
+            <h2 class="section-title">Latest Received Orders</h2>
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order No.</th>
+                        <th>Customer</th>
+                        <th>Products</th>
+                        <th>Total</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody"></tbody>
+            </table>
+
+            <div id="addProductModal" class="modal">
+                <div class="modal-content">
+                    <button class="modal-close" onclick="closeModal()" aria-label="Close Modal">✖</button>
+                    <h2>Add a New Product</h2>
+                    <form id="addProductForm">
+                        <div class="form-group">
+                            <label for="productName">Product Name</label>
+                            <input type="text" id="productName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productPrice">Price (TND)</label>
+                            <input type="number" id="productPrice" name="price" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">Stock</label>
+                            <input type="number" id="productStock" name="stock" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productUnit">Unit</label>
+                            <select id="productUnit" name="unit" required>
+                                <option value="kg">kg</option>
+                                <option value="unit">unit</option>
+                                <option value="liter">liter</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productImage">Product Image</label>
+                            <input type="file" id="productImage" name="image" accept="image/jpeg,image/png,image/gif">
+                            <div class="progress-bar" id="uploadProgress">
+                                <div class="progress-bar-fill" id="progressBarFill"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">Upload Progress: 0%</div>
+                        </div>
+                        <button type="submit" id="submitProductBtn">Add Product</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.appspot.com",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TND' });
+
+        const appData = {
+            currentUser: null,
+            products: [
+                {
+                    id: 'pesticide-001',
+                    name: '2,4-D LV4 Ester Herbicide',
+                    price: 250,
+                    stock: 100,
+                    unit: 'liter',
+                    imagePaths: ['https://www.lawnandpestcontrolsupply.com/cdn/shop/products/2_2c4-d_20lv4_20herbicide_37200844-19a1-4791-9735-cf84c80d3cb6_320x.jpg?v=1661965815'],
+                    sold: 10,
+                    rating: 4.5,
+                    createdAt: new Date(),
+                    description: 'Low-volatile phenoxy herbicide controlling over 90 broadleaf weeds in crops like cereal grains, corn, sorghum, soybeans (pre-plant), rangeland, pasture, fallow land, and turf.'
+                },
+                {
+                    id: 'fertilizer-001',
+                    name: 'NPK 20-20-20 Fertilizer',
+                    price: 150,
+                    stock: 200,
+                    unit: 'kg',
+                    imagePaths: ['https://farmpays.com/wp-content/uploads/2023/05/7058ad29-ee41-4a0b-8ce7-300afa410607.jpg'],
+                    sold: 25,
+                    rating: 4.0,
+                    createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
+                    description: 'Balanced fertilizer for all-purpose crop nutrition, promoting healthy growth and yield.'
+                },
+                {
+                    id: 'seed-001',
+                    name: 'Hybrid Corn Seeds',
+                    price: 80,
+                    stock: 500,
+                    unit: 'kg',
+                    imagePaths: ['https://www.shutterstock.com/image-photo/hybrid-corn-seeds-super-fruit-260nw-2323761767.jpg'],
+                    sold: 50,
+                    rating: 4.8,
+                    createdAt: new Date(new Date().setDate(new Date().getDate() - 5)),
+                    description: 'High-yield corn seeds suitable for various climates, resistant to common pests.'
+                },
+                {
+                    id: 'pesticide-002',
+                    name: 'Glyphosate 41% Herbicide',
+                    price: 180,
+                    stock: 30,
+                    unit: 'liter',
+                    imagePaths: ['https://saraswatiagrolifescience.com/wp-content/uploads/2023/04/product13.jpg'],
+                    sold: 15,
+                    rating: 4.2,
+                    createdAt: new Date(new Date().setDate(new Date().getDate() - 7)),
+                    description: 'Broad-spectrum systemic herbicide for effective weed control in agricultural and non-agricultural settings.'
+                },
+                {
+                    id: 'tool-001',
+                    name: 'Hand Trowel',
+                    price: 20,
+                    stock: 150,
+                    unit: 'unit',
+                    imagePaths: ['https://www.cowellsgc.co.uk/files/images/webshop/kent-stowe-hand-trowel-1000x1000-659d687fd6d24_l.webp'],
+                    sold: 40,
+                    rating: 4.6,
+                    createdAt: new Date(new Date().setDate(new Date().getDate() - 10)),
+                    description: 'Durable hand trowel for planting, weeding, and harvesting in small-scale farming.'
+                }
+            ],
+            receivedOrders: [
+                {
+                    id: 'order-001',
+                    customer: { prenom: 'Ali', nom: 'Ben Ahmed' },
+                    products: [
+                        { name: '2,4-D LV4 Ester Herbicide', quantity: 2, unit: 'liter' },
+                        { name: 'NPK 20-20-20 Fertilizer', quantity: 5, unit: 'kg' }
+                    ],
+                    total: 1000,
+                    date: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
+                    status: 'delivered'
+                },
+                {
+                    id: 'order-002',
+                    customer: { prenom: 'Fatima', nom: 'Zohra' },
+                    products: [
+                        { name: 'Hybrid Corn Seeds', quantity: 10, unit: 'kg' }
+                    ],
+                    total: 800,
+                    date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
+                    status: 'shipped'
+                },
+                {
+                    id: 'order-003',
+                    customer: { prenom: 'Mohamed', nom: 'Salem' },
+                    products: [
+                        { name: 'NPK 20-20-20 Fertilizer', quantity: 3, unit: 'kg' },
+                        { name: '2,4-D LV4 Ester Herbicide', quantity: 1, unit: 'liter' }
+                    ],
+                    total: 700,
+                    date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString(),
+                    status: 'processing'
+                },
+                {
+                    id: 'order-004',
+                    customer: { prenom: 'Aicha', nom: 'Haddad' },
+                    products: [
+                        { name: 'Hybrid Corn Seeds', quantity: 20, unit: 'kg' }
+                    ],
+                    total: 1600,
+                    date: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(),
+                    status: 'new'
+                },
+                {
+                    id: 'order-005',
+                    customer: { prenom: 'Hassan', nom: 'Mansour' },
+                    products: [
+                        { name: 'Glyphosate 41% Herbicide', quantity: 3, unit: 'liter' },
+                        { name: 'Hand Trowel', quantity: 10, unit: 'unit' }
+                    ],
+                    total: 740,
+                    date: new Date(new Date().setDate(new Date().getDate() - 6)).toISOString(),
+                    status: 'delivered'
+                }
+            ],
+            stats: {
+                activeProducts: 0,
+                monthlyOrders: 0,
+                monthlyRevenue: 0,
+                averageRating: 0
+            }
+        };
+
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(async user => {
+                    unsubscribe();
+                    if (!user) {
+                        showAlert('You must be logged in.', 'error');
+                        setTimeout(() => window.location.href = 'login.html', 1500);
+                        return reject('Not authenticated');
+                    }
+                    try {
+                        const userDoc = await db.collection('users').doc(user.uid).get();
+                        if (!userDoc.exists) throw new Error('User data not found');
+                        appData.currentUser = {
+                            uid: user.uid,
+                            prenom: userDoc.data().prenom || 'User',
+                            nom: userDoc.data().nom || '',
+                            role: userDoc.data().role || 'supplier'
+                        };
+                        document.getElementById('userName').textContent = `${appData.currentUser.prenom} ${appData.currentUser.nom}`;
+                        document.getElementById('userAvatar').textContent = appData.currentUser.prenom[0] + (appData.currentUser.nom ? appData.currentUser.nom[0] : '');
+                        document.getElementById('userNameMain').textContent = appData.currentUser.prenom;
+                        if (appData.currentUser.role !== 'supplier') {
+                            showAlert('Access restricted to suppliers.', 'error');
+                            setTimeout(() => window.location.href = appData.currentUser.role === 'client' ? 'dashboard_customer.html' : 'login.html', 1500);
+                            return reject('Unauthorized role');
+                        }
+                        resolve(user.uid);
+                    } catch (error) {
+                        console.error('Error fetching user:', error);
+                        showAlert('Error fetching user data.', 'error');
+                        setTimeout(() => window.location.href = 'login.html', 1500);
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        async function loadProducts(uid) {
+            try {
+                const productsSnapshot = await db.collection('users').doc(uid).collection('products').get();
+                appData.products = [...appData.products, ...productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+                renderProducts(appData.products);
+                updateStats();
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showAlert('Error loading products.', 'error');
+            }
+        }
+
+        async function loadReceivedOrders(uid) {
+            try {
+                const ordersSnapshot = await db.collection('users').doc(uid).collection('receivedOrders').orderBy('date', 'desc').limit(5).get();
+                appData.receivedOrders = [...appData.receivedOrders, ...ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+                renderOrders();
+                updateStats();
+                renderSalesChart();
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showAlert('Error loading orders.', 'error');
+            }
+        }
+
+        function setupRealtimeListeners(uid) {
+            db.collection('users').doc(uid).collection('products').onSnapshot(snapshot => {
+                appData.products = [...appData.products.filter(p => p.id.includes('-00')), ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+                renderProducts(appData.products);
+                updateStats();
+            });
+
+            db.collection('users').doc(uid).collection('receivedOrders').onSnapshot(snapshot => {
+                appData.receivedOrders = [...appData.receivedOrders.filter(o => o.id.includes('order-00')), ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+                renderOrders();
+                updateStats();
+                renderSalesChart();
+            });
+        }
+
+        function renderProducts(products) {
+            const productsTableBody = document.getElementById('productsTableBody');
+            productsTableBody.innerHTML = products.length === 0 ? '<tr><td colspan="6">No products available.</td></tr>' : '';
+            products.forEach(product => {
+                const stockStatus = product.stock > 50 ? 'high' : product.stock > 0 ? 'low' : 'out';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="product-mini">
+                            <img src="${product.imagePaths?.[0] || 'https://via.placeholder.com/50'}" alt="${product.name}" class="product-mini-img">
+                            <span>${product.name}</span>
+                        </div>
+                    </td>
+                    <td>${formatter.format(product.price)}</td>
+                    <td>${product.stock} ${product.unit}</td>
+                    <td>${product.sold || 0} ${product.unit}</td>
+                    <td><span class="stock-badge stock-${stockStatus}">${stockStatus === 'high' ? 'In Stock' : stockStatus === 'low' ? 'Low Stock' : 'Out of Stock'}</span></td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editProduct('${product.id}')">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteProduct('${product.id}')">Delete</button>
+                    </td>
+                `;
+                productsTableBody.appendChild(row);
+            });
+        }
+
+        function renderOrders() {
+            const ordersTableBody = document.getElementById('ordersTableBody');
+            ordersTableBody.innerHTML = appData.receivedOrders.length === 0 ? '<tr><td colspan="6">No recent orders.</td></tr>' : '';
+            appData.receivedOrders.forEach(order => {
+                const productNames = order.products.map(p => `${p.name} (${p.quantity} ${p.unit})`).join(', ');
+                const customerName = order.customer ? `${order.customer.prenom} ${order.customer.nom || ''}`.trim() : 'Unknown';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${customerName}</td>
+                    <td>${productNames}</td>
+                    <td>${formatter.format(order.total)}</td>
+                    <td>${new Date(order.date).toLocaleDateString('en-US')}</td>
+                    <td><span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                `;
+                ordersTableBody.appendChild(row);
+            });
+        }
+
+        function updateStats() {
+            appData.stats.activeProducts = appData.products.length;
+            appData.stats.monthlyOrders = appData.receivedOrders.filter(order => {
+                const orderDate = new Date(order.date);
+                const now = new Date();
+                return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+            }).length;
+            appData.stats.monthlyRevenue = appData.receivedOrders
+                .filter(order => {
+                    const orderDate = new Date(order.date);
+                    const now = new Date();
+                    return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+                })
+                .reduce((sum, order) => sum + order.total, 0);
+            appData.stats.averageRating = appData.products.length > 0 ? 
+                (appData.products.reduce((sum, p) => sum + (p.rating || 0), 0) / appData.products.length).toFixed(1) : 0;
+
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value">${appData.stats.activeProducts}</div>
+                    <div class="stat-label">Active Products</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🛒</div>
+                    <div class="stat-value">${appData.stats.monthlyOrders}</div>
+                    <div class="stat-label">Orders this Month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value">${formatter.format(appData.stats.monthlyRevenue)}</div>
+                    <div class="stat-label">Monthly Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value">${appData.stats.averageRating}</div>
+                    <div class="stat-label">Average Rating</div>
+                </div>
+            `;
+        }
+
+        function renderSalesChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const now = new Date();
+            const labels = [];
+            const salesData = [];
+
+            // Générer les labels pour les 7 derniers jours
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }));
+                // Calculer le total des ventes pour chaque jour
+                const dailySales = appData.receivedOrders
+                    .filter(order => {
+                        const orderDate = new Date(order.date);
+                        return orderDate.toDateString() === date.toDateString();
+                    })
+                    .reduce((sum, order) => sum + order.total, 0);
+                salesData.push(dailySales);
+            }
+
+            // Détruire le graphique existant s'il y en a un
+            if (window.salesChart instanceof Chart) {
+                window.salesChart.destroy();
+            }
+
+            // Créer un nouveau graphique
+            window.salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sales (TND)',
+                        data: salesData,
+                        borderColor: '#2d8659',
+                        backgroundColor: 'rgba(45, 134, 89, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#2d8659',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#2d8659'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Revenue (TND)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatter.format(value);
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Sales: ${formatter.format(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function filterProducts(filter) {
+            const filteredProducts = filter === 'inStock' ? appData.products.filter(p => p.stock > 0) :
+                                    filter === 'lowStock' ? appData.products.filter(p => p.stock > 0 && p.stock <= 50) :
+                                    appData.products;
+            renderProducts(filteredProducts);
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('onclick').includes(`'${filter}'`));
+            });
+        }
+
+        function addProduct() {
+            const modal = document.getElementById('addProductModal');
+            modal.style.display = 'flex';
+            document.getElementById('addProductForm').reset();
+            document.getElementById('submitProductBtn').disabled = false;
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('progressText').style.display = 'none';
+            document.getElementById('progressBarFill').style.width = '0%';
+        }
+
+        function closeModal() {
+            document.getElementById('addProductModal').style.display = 'none';
+            document.getElementById('addProductForm').reset();
+            document.getElementById('submitProductBtn').disabled = false;
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('progressText').style.display = 'none';
+            document.getElementById('progressBarFill').style.width = '0%';
+        }
+
+        async function handleAddProduct(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitButton = document.getElementById('submitProductBtn');
+            const progressBar = document.getElementById('uploadProgress');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const progressText = document.getElementById('progressText');
+
+            const name = form.name.value.trim();
+            const price = parseFloat(form.price.value);
+            const stock = parseInt(form.stock.value);
+            const unit = form.unit.value;
+            const imageFile = form.image.files[0];
+
+            if (!name || isNaN(price) || price <= 0 || isNaN(stock) || stock < 0 || !unit) {
+                showAlert('Please fill in all fields correctly.', 'error');
+                return;
+            }
+
+            if (imageFile) {
+                if (!['image/jpeg', 'image/png', 'image/gif'].includes(imageFile.type)) {
+                    showAlert('Please select a valid image (JPEG, PNG, GIF).', 'error');
+                    return;
+                }
+                if (imageFile.size > 5 * 1024 * 1024) {
+                    showAlert('Image size must be less than 5MB.', 'error');
+                    return;
+                }
+            }
+
+            if (!auth.currentUser || !appData.currentUser?.uid) {
+                showAlert('You must be logged in to add a product.', 'error');
+                setTimeout(() => window.location.href = 'login.html', 1500);
+                return;
+            }
+
+            console.log('Starting product add for user:', appData.currentUser.uid);
+            submitButton.disabled = true;
+            let imageUrl = null;
+
+            try {
+                const productRef = db.collection('users').doc(appData.currentUser.uid).collection('products').doc();
+                console.log('Product ref created:', productRef.path);
+
+                const productData = {
+                    name,
+                    price,
+                    stock,
+                    unit,
+                    imagePaths: [],
+                    sold: 0,
+                    rating: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (imageFile) {
+                    console.log('Starting image upload for file:', imageFile.name, 'size:', imageFile.size);
+                    progressBar.style.display = 'block';
+                    progressText.style.display = 'block';
+                    progressText.textContent = 'Upload Progress: 0%';
+
+                    const storagePath = `products/${appData.currentUser.uid}/${productRef.id}/${imageFile.name}`;
+                    const storageRef = storage.ref().child(storagePath);
+                    const uploadTask = storageRef.put(imageFile);
+
+                    const uploadTimeout = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000);
+                    });
+
+                    imageUrl = await Promise.race([
+                        new Promise((resolve, reject) => {
+                            uploadTask.on('state_changed',
+                                snapshot => {
+                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                    console.log(`Upload progress: ${Math.round(progress)}%`);
+                                    progressBarFill.style.width = `${progress}%`;
+                                    progressText.textContent = `Upload Progress: ${Math.round(progress)}%`;
+                                },
+                                error => {
+                                    console.error('Upload error during state change:', error);
+                                    reject(error);
+                                },
+                                async () => {
+                                    console.log('Upload complete, getting download URL');
+                                    try {
+                                        const url = await uploadTask.snapshot.ref.getDownloadURL();
+                                        console.log('Download URL obtained:', url);
+                                        resolve(url);
+                                    } catch (error) {
+                                        console.error('Error getting download URL:', error);
+                                        reject(error);
+                                    }
+                                }
+                            );
+                        }),
+                        uploadTimeout
+                    ]);
+                    productData.imagePaths = [imageUrl];
+                } else {
+                    console.log('No image provided, skipping upload');
+                }
+
+                console.log('Saving product data to Firestore:', productData);
+                await productRef.set(productData);
+                console.log('Product saved successfully');
+
+                showAlert('Product added successfully!', 'success');
+                closeModal();
+            } catch (error) {
+                console.error('Full error in handleAddProduct:', error);
+                const errorMessages = {
+                    'storage/unauthorized': 'Upload failed: Check if you\'re logged in and have storage permissions.',
+                    'storage/canceled': 'Upload was canceled—try again.',
+                    'storage/quota-exceeded': 'Storage quota exceeded. Contact support.',
+                    'permission-denied': 'Permission denied: Ensure you\'re a supplier and rules are set.',
+                    'unauthenticated': 'Not logged in—please refresh and log in again.',
+                    'Upload timed out after 30 seconds': 'Upload stalled (network?). Try a smaller file or check connection.'
+                };
+                showAlert(errorMessages[error.code] || `Error: ${error.message}`, 'error');
+                
+                submitButton.disabled = false;
+                progressBar.style.display = 'none';
+                progressText.style.display = 'none';
+                progressBarFill.style.width = '0%';
+            }
+        }
+
+        function editProduct(productId) {
+            showAlert(`Edit form for product ${productId} to be implemented`, 'success');
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+            try {
+                const uid = appData.currentUser.uid;
+                const productDoc = await db.collection('users').doc(uid).collection('products').doc(productId).get();
+                if (productDoc.exists) {
+                    const productData = productDoc.data();
+                    if (productData.imagePaths?.length) {
+                        for (const imageUrl of productData.imagePaths) {
+                            try {
+                                await storage.refFromURL(imageUrl).delete();
+                            } catch (error) {
+                                console.warn('Failed to delete image:', error);
+                            }
+                        }
+                    }
+                }
+                await db.collection('users').doc(uid).collection('products').doc(productId).delete();
+                showAlert('Product deleted successfully', 'success');
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showAlert('Error deleting product.', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            document.getElementById('alertMessage').textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 4000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        function navigateTo(page) {
+            const pageMap = {
+                dashboard: 'dashboard_fournisseur.html',
+                products: 'products.html',
+                orders: 'orders_supplier.html',
+                revenue: 'revenue.html',
+                statistics: 'statistics.html',
+                profile: 'profile.html'
+            };
+            if (pageMap[page]) window.location.href = pageMap[page];
+            else showAlert('Page not implemented', 'error');
+        }
+
+        async function logout() {
+            if (!confirm('Are you sure you want to log out?')) return;
+            try {
+                await auth.signOut();
+                showAlert('Logged out successfully', 'success');
+                setTimeout(() => window.location.href = 'login.html', 1500);
+            } catch (error) {
+                console.error('Error logging out:', error);
+                showAlert('Error logging out.', 'error');
+            }
+        }
+
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                await Promise.all([loadProducts(uid), loadReceivedOrders(uid)]);
+                setupRealtimeListeners(uid);
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('data-page') === 'dashboard');
+                });
+                document.getElementById('addProductForm').addEventListener('submit', handleAddProduct);
+                renderProducts(appData.products);
+                renderOrders();
+                renderSalesChart();
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showAlert('Error initializing app.', 'error');
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>

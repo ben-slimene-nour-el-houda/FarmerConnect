@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Received Orders - AgriWie</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        .user-menu:hover {
+            background: #f0f0f0;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d8659;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .sidebar h3 {
+            color: #2d8659;
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+        }
+        .menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .menu-item:hover {
+            background: #f0f8f4;
+        }
+        .menu-item.active {
+            background: #2d8659;
+            color: white;
+        }
+        .add-product-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .add-product-btn:hover {
+            background: #f57c00;
+        }
+        .logout-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .orders-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+        .orders-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .status-new {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-processing {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        .status-shipped {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .status-delivered {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .update-btn {
+            background: #2196f3;
+            color: white;
+        }
+        .update-btn:hover {
+            background: #1976d2;
+        }
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            position: relative;
+        }
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+        .alert-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .orders-table {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="navigateTo('dashboard')" role="button" tabindex="0" aria-label="Go to Dashboard">
+                <span>🚜</span>
+                <span>AgriWie Pro</span>
+            </div>
+            <div class="user-menu" role="button" tabindex="0" aria-label="User Menu">
+                <div class="user-avatar" id="userAvatar"></div>
+                <span id="userName"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h3>Navigation</h3>
+            <div class="menu-item" onclick="navigateTo('dashboard')" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">
+                <span>📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('products')" data-page="products" role="button" tabindex="0" aria-label="My Products">
+                <span>📦</span>
+                <span>My Products</span>
+            </div>
+            <div class="menu-item active" onclick="navigateTo('orders')" data-page="orders" role="button" tabindex="0" aria-label="Received Orders">
+                <span>🛒</span>
+                <span>Received Orders</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('revenue')" data-page="revenue" role="button" tabindex="0" aria-label="Revenue">
+                <span>💰</span>
+                <span>Revenue</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('statistics')" data-page="statistics" role="button" tabindex="0" aria-label="Statistics">
+                <span>📈</span>
+                <span>Statistics</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('profile')" data-page="profile" role="button" tabindex="0" aria-label="My Profile">
+                <span>👤</span>
+                <span>My Profile</span>
+            </div>
+            <div class="menu-item" onclick="navigateTo('settings')" data-page="settings" role="button" tabindex="0" aria-label="Settings">
+                <span>⚙️</span>
+                <span>Settings</span>
+            </div>
+            <button class="add-product-btn" onclick="addProduct()" role="button" aria-label="Add a Product">
+                <span>➕</span>
+                <span>Add a Product</span>
+            </button>
+            <button class="logout-btn" onclick="logout()" role="button" aria-label="Logout">Logout</button>
+        </aside>
+
+        <main class="main-content">
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()" role="button" aria-label="Close Alert">✖</button>
+            </div>
+            <h2 class="section-title">Received Orders</h2>
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order No.</th>
+                        <th>Customer</th>
+                        <th>Products</th>
+                        <th>Total</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <!-- Orders will be loaded dynamically -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.firebasestorage.app",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TND' });
+
+        // App Data
+        const appData = {
+            currentUser: null,
+            receivedOrders: []
+        };
+
+        // Get Current User
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                    unsubscribe();
+                    if (user) {
+                        try {
+                            const userDoc = await db.collection('users').doc(user.uid).get();
+                            if (!userDoc.exists) {
+                                throw new Error('User data not found in Firestore');
+                            }
+                            const userData = userDoc.data();
+                            appData.currentUser = {
+                                uid: user.uid,
+                                prenom: userData.prenom || 'User',
+                                nom: userData.nom || '',
+                                role: userData.role || 'supplier'
+                            };
+                            document.getElementById('userName').textContent = `${appData.currentUser.prenom} ${appData.currentUser.nom}`;
+                            document.getElementById('userAvatar').textContent = appData.currentUser.prenom.charAt(0) + (appData.currentUser.nom ? appData.currentUser.nom.charAt(0) : '');
+                            if (appData.currentUser.role !== 'supplier') {
+                                showAlert('Access restricted to suppliers.', 'error');
+                                setTimeout(() => {
+                                    window.location.href = appData.currentUser.role === 'client' ? 'dashboard_customer.html' : 'login.html';
+                                }, 1500);
+                                reject('Unauthorized role');
+                                return;
+                            }
+                            resolve(user.uid);
+                        } catch (error) {
+                            showAlert('Error fetching user data: ' + error.message, 'error');
+                            setTimeout(() => {
+                                window.location.href = 'login.html';
+                            }, 1500);
+                            reject(error);
+                        }
+                    } else {
+                        showAlert('You must be logged in.', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                        reject('Not authenticated');
+                    }
+                });
+            });
+        }
+
+        // Load Received Orders from Firestore
+        async function loadReceivedOrders(uid) {
+            try {
+                const ordersSnapshot = await db.collection('users').doc(uid).collection('receivedOrders').orderBy('date', 'desc').get();
+                appData.receivedOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderOrders();
+            } catch (error) {
+                showAlert('Error loading orders: ' + error.message, 'error');
+            }
+        }
+
+        // Render Orders
+        function renderOrders() {
+            const ordersTableBody = document.getElementById('ordersTableBody');
+            ordersTableBody.innerHTML = '';
+            if (appData.receivedOrders.length === 0) {
+                ordersTableBody.innerHTML = '<tr><td colspan="7">No orders available.</td></tr>';
+                return;
+            }
+            appData.receivedOrders.forEach(order => {
+                const productNames = order.products.map(p => `${p.name} (${p.quantity} ${p.unit})`).join(', ');
+                const customerName = order.customer ? `${order.customer.prenom} ${order.customer.nom || ''}`.trim() : 'Unknown';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${customerName}</td>
+                    <td>${productNames}</td>
+                    <td>${formatter.format(order.total)}</td>
+                    <td>${new Date(order.date).toLocaleDateString('en-US')}</td>
+                    <td><span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                    <td><button class="action-btn update-btn" onclick="updateOrderStatus('${order.id}')">Update Status</button></td>
+                `;
+                ordersTableBody.appendChild(row);
+            });
+        }
+
+        // Update Order Status
+        async function updateOrderStatus(orderId) {
+            showAlert('Order status update form to be implemented', 'success');
+            // TODO: Implement status update (e.g., cycle through new, processing, shipped, delivered)
+        }
+
+        // Show Alert
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 4000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            const pageMap = {
+                'dashboard': 'dashboard_fournisseur.html',
+                'products': 'products.html',
+                'orders': 'orders_supplier.html',
+                'revenue': 'revenue.html',
+                'statistics': 'statistics.html',
+                'profile': 'profile.html',
+                'settings': 'settings.html'
+            };
+            if (pageMap[page]) {
+                window.location.href = pageMap[page];
+            } else {
+                showAlert('Page not implemented', 'error');
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                try {
+                    await auth.signOut();
+                    showAlert('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } catch (error) {
+                    showAlert('Error logging out: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                await loadReceivedOrders(uid);
+                db.collection('users').doc(uid).collection('receivedOrders').onSnapshot((snapshot) => {
+                    appData.receivedOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderOrders();
+                });
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    if (item.getAttribute('data-page') === 'orders') {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            } catch (error) {
+                showAlert('Error initializing app: ' + error.message, 'error');
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Favorites - AgriWie</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff5722;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6em;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .user-menu:hover {
+            background: #f0f0f0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d8659;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .sidebar h3 {
+            color: #2d8659;
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: #f0f8f4;
+        }
+
+        .menu-item.active {
+            background: #2d8659;
+            color: white;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2em;
+            color: #333;
+        }
+
+        .favorites-count {
+            background: #ff5722;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+
+        .favorite-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff5722;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .favorite-badge:hover {
+            background: #e64a19;
+            transform: scale(1.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-seller {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            font-size: 1.3em;
+            color: #2d8659;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-stock {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .product-details {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 1rem;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .quantity-selector input {
+            width: 60px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-cart {
+            background: #2d8659;
+            color: white;
+        }
+
+        .btn-cart:hover {
+            background: #236b47;
+        }
+
+        .btn-order {
+            background: #1976d2;
+            color: white;
+        }
+
+        .btn-order:hover {
+            background: #1565c0;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .empty-favorites {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .empty-icon {
+            font-size: 5em;
+            margin-bottom: 1rem;
+        }
+
+        .empty-favorites h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .empty-favorites p {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .browse-btn {
+            padding: 15px 30px;
+            background: #2d8659;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+
+        .browse-btn:hover {
+            background: #236b47;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            position: relative;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="navigateTo('dashboard')" role="button" tabindex="0" aria-label="Go to Dashboard">🌾 AgriWie</div>
+            <div class="header-right">
+                <div class="cart-icon" onclick="navigateTo('cart')" role="button" tabindex="0" aria-label="View Cart">
+                    🛒
+                    <span id="cartBadge" class="cart-badge">0</span>
+                </div>
+                <div class="user-menu" role="button" tabindex="0" aria-label="User Menu">
+                    <div class="user-avatar" id="userAvatar"></div>
+                    <span id="userName"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>My Space</h3>
+            <div class="menu-item" onclick="navigateTo('dashboard')" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">🏠 Dashboard</div>
+            <div class="menu-item" onclick="navigateTo('orders')" data-page="orders" role="button" tabindex="0" aria-label="Orders">📦 Orders</div>
+            <div class="menu-item active" onclick="navigateTo('favorites')" data-page="favorites" role="button" tabindex="0" aria-label="Favorites">❤️ Favorites</div>
+            <div class="menu-item" onclick="navigateTo('cart')" data-page="cart" role="button" tabindex="0" aria-label="Cart">🛒 Cart</div>
+            <div class="menu-item" onclick="navigateTo('profile')" data-page="profile" role="button" tabindex="0" aria-label="Profile">👤 Profile</div>
+            <button class="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+        <div class="main-content">
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()" aria-label="Close Alert">✖</button>
+            </div>
+            <div class="page-header">
+                <h1 class="page-title">My Favorites</h1>
+                <div class="favorites-count" id="favoritesCount">0 items</div>
+            </div>
+            <div id="favoritesContainer" class="products-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.firebasestorage.app",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TND' });
+
+        // Static Products Data
+        const appData = {
+            currentUser: null,
+            favorites: [],
+            cart: [],
+            orders: [],
+            products: [
+                {
+                    id: 'prod1',
+                    name: 'Organic Tomatoes',
+                    price: 3.50,
+                    stock: 100,
+                    unit: 'kg',
+                    category: 'crops',
+                    description: 'Fresh organic tomatoes from local farms',
+                    seller: 'Ahmed Ben Ali',
+                    phone: '+216 20 123 456',
+                    location: 'Nabeul',
+                    imagePaths: ['https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=400'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod2',
+                    name: 'Olive Oil',
+                    price: 25.00,
+                    stock: 50,
+                    unit: 'liter',
+                    category: 'crops',
+                    description: 'Premium extra virgin olive oil',
+                    seller: 'Fatma Mansour',
+                    phone: '+216 22 456 789',
+                    location: 'Sfax',
+                    imagePaths: ['https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod3',
+                    name: 'Fresh Eggs',
+                    price: 0.30,
+                    stock: 200,
+                    unit: 'unit',
+                    category: 'animalproduct',
+                    description: 'Free-range chicken eggs',
+                    seller: 'Mohamed Trabelsi',
+                    phone: '+216 25 789 012',
+                    location: 'Bizerte',
+                    imagePaths: ['https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod4',
+                    name: 'Wheat Seeds',
+                    price: 15.00,
+                    stock: 80,
+                    unit: 'kg',
+                    category: 'seeds',
+                    description: 'High-quality wheat seeds for planting',
+                    seller: 'Salah Bouazizi',
+                    phone: '+216 28 345 678',
+                    location: 'Kairouan',
+                    imagePaths: ['https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod5',
+                    name: 'Organic Fertilizer',
+                    price: 8.50,
+                    stock: 120,
+                    unit: 'kg',
+                    category: 'fertilizers',
+                    description: 'Natural compost fertilizer for all crops',
+                    seller: 'Leila Khediri',
+                    phone: '+216 21 567 890',
+                    location: 'Sousse',
+                    imagePaths: ['https://images.unsplash.com/photo-1592838064575-70ed626d3a0e?w=400'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod6',
+                    name: 'Irrigation Hose',
+                    price: 45.00,
+                    stock: 30,
+                    unit: 'unit',
+                    category: 'irrigation',
+                    description: '50m professional irrigation hose',
+                    seller: 'Karim Saidi',
+                    phone: '+216 29 678 901',
+                    location: 'Monastir',
+                    imagePaths: ['https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400'],
+                    date: new Date().toISOString()
+                }
+            ]
+        };
+
+        const categoryTranslations = {
+            seeds: "Seeds",
+            tools: "Tools",
+            animal_food: "Animal Feed",
+            fertilizers: "Fertilizers",
+            pesticides: "Pesticides",
+            irrigation: "Irrigation Tools",
+            animals: "Animals",
+            crops: "Crops",
+            animalproduct: "Animal Products",
+            other: "Other"
+        };
+
+        // Get Current User
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    unsubscribe();
+                    if (user) {
+                        appData.currentUser = { uid: user.uid };
+                        db.collection('users').doc(user.uid).get().then(doc => {
+                            if (doc.exists) {
+                                const userData = doc.data();
+                                appData.currentUser.prenom = userData.prenom || 'John';
+                                appData.currentUser.nom = userData.nom || 'Doe';
+                                appData.currentUser.role = userData.role || 'client';
+                                document.getElementById('userName').textContent = `${userData.prenom} ${userData.nom}`;
+                                document.getElementById('userAvatar').textContent = userData.prenom.charAt(0) + userData.nom.charAt(0);
+                            }
+                        });
+                        resolve(user.uid);
+                    } else {
+                        showAlert('You must be logged in.', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                        reject('Not authenticated');
+                    }
+                });
+            });
+        }
+
+        // Load Favorites from Firestore
+        async function loadFavorites(uid) {
+            try {
+                const favSnapshot = await db.collection('users').doc(uid).collection('favorites').get();
+                appData.favorites = favSnapshot.docs.map(doc => doc.id);
+                renderFavorites();
+            } catch (error) {
+                showAlert('Error loading favorites: ' + error.message, 'error');
+            }
+        }
+
+        // Load Cart from Firestore
+        async function loadCart(uid) {
+            try {
+                const cartSnapshot = await db.collection('users').doc(uid).collection('cart').get();
+                appData.cart = cartSnapshot.docs.map(doc => doc.data());
+                updateCartBadge();
+            } catch (error) {
+                showAlert('Error loading cart: ' + error.message, 'error');
+            }
+        }
+
+        // Save Favorites to Firestore
+        async function saveFavorites(uid) {
+            try {
+                const batch = db.batch();
+                const oldFav = await db.collection('users').doc(uid).collection('favorites').get();
+                oldFav.docs.forEach(doc => batch.delete(doc.ref));
+                appData.favorites.forEach(id => {
+                    batch.set(db.collection('users').doc(uid).collection('favorites').doc(id), { productId: id });
+                });
+                await batch.commit();
+            } catch (error) {
+                showAlert('Error saving favorites: ' + error.message, 'error');
+            }
+        }
+
+        // Save Cart to Firestore
+        async function saveCart(uid) {
+            try {
+                const batch = db.batch();
+                const oldCart = await db.collection('users').doc(uid).collection('cart').get();
+                oldCart.docs.forEach(doc => batch.delete(doc.ref));
+                appData.cart.forEach(item => {
+                    batch.set(db.collection('users').doc(uid).collection('cart').doc(item.productId), item);
+                });
+                await batch.commit();
+            } catch (error) {
+                showAlert('Error saving cart: ' + error.message, 'error');
+            }
+        }
+
+        // Save Order to Firestore
+        async function saveOrder(uid, order) {
+            try {
+                await db.collection('users').doc(uid).collection('orders').add(order);
+            } catch (error) {
+                showAlert('Error saving order: ' + error.message, 'error');
+            }
+        }
+
+        // Format Price
+        function formatPrice(price) {
+            return formatter.format(price);
+        }
+
+        // Show Alert
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 4000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        // Remove Favorite
+        async function removeFavorite(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                const index = appData.favorites.indexOf(productId);
+                if (index > -1) {
+                    appData.favorites.splice(index, 1);
+                    await saveFavorites(uid);
+                    renderFavorites();
+                    showAlert('Removed from favorites', 'success');
+                }
+            } catch (error) {
+                showAlert('Error removing favorite: ' + error.message, 'error');
+            }
+        }
+
+        // Add to Cart
+        async function addToCart(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                const product = appData.products.find(p => p.id === productId);
+                const quantityInput = document.getElementById(`quantity-${productId}`);
+                const quantity = parseInt(quantityInput.value);
+
+                if (!product || quantity < 1 || quantity > product.stock) {
+                    showAlert('Invalid quantity', 'error');
+                    return;
+                }
+
+                const existingItem = appData.cart.find(item => item.productId === productId);
+                if (existingItem) {
+                    existingItem.quantity += quantity;
+                } else {
+                    appData.cart.push({
+                        productId: product.id,
+                        productName: product.name,
+                        quantity: quantity,
+                        price: product.price,
+                        unit: product.unit,
+                        seller: product.seller,
+                        location: product.location,
+                        image: product.imagePaths[0],
+                        stock: product.stock
+                    });
+                }
+
+                await saveCart(uid);
+                updateCartBadge();
+                showAlert(`${product.name} (${quantity} ${product.unit}) added to cart!`, 'success');
+            } catch (error) {
+                showAlert('Error adding to cart: ' + error.message, 'error');
+            }
+        }
+
+        // Order Now
+        async function orderNow(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                const product = appData.products.find(p => p.id === productId);
+                const quantityInput = document.getElementById(`quantity-${productId}`);
+                const quantity = parseInt(quantityInput.value);
+
+                if (!product || quantity < 1 || quantity > product.stock) {
+                    showAlert('Invalid quantity', 'error');
+                    return;
+                }
+
+                if (confirm(`Confirm order of ${quantity} ${product.unit} of ${product.name}?`)) {
+                    const order = {
+                        id: 'ORD' + Date.now(),
+                        date: new Date().toISOString(),
+                        products: [{
+                            productId: product.id,
+                            name: product.name,
+                            quantity: quantity,
+                            unit: product.unit,
+                            price: product.price
+                        }],
+                        total: product.price * quantity,
+                        status: 'pending'
+                    };
+
+                    await saveOrder(uid, order);
+                    showAlert(`Order placed successfully! ID: ${order.id}`, 'success');
+                }
+            } catch (error) {
+                showAlert('Error placing order: ' + error.message, 'error');
+            }
+        }
+
+        // Update Cart Badge
+        function updateCartBadge() {
+            const totalItems = appData.cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartBadge').textContent = totalItems;
+        }
+
+        // Render Favorites
+        function renderFavorites() {
+            const container = document.getElementById('favoritesContainer');
+            const countElement = document.getElementById('favoritesCount');
+            
+            const favoriteProducts = appData.products.filter(p => appData.favorites.includes(p.id));
+            countElement.textContent = `${favoriteProducts.length} items`;
+
+            if (favoriteProducts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-favorites">
+                        <div class="empty-icon">💔</div>
+                        <h2>No favorites yet</h2>
+                        <p>Start adding products to your favorites to see them here!</p>
+                        <button class="browse-btn" onclick="navigateTo('dashboard')">
+                            Browse Products
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = favoriteProducts.map(product => `
+                <div class="product-card">
+                    <div class="favorite-badge" onclick="removeFavorite('${product.id}')" title="Remove from favorites">
+                        ❤️
+                    </div>
+                    <img src="${product.imagePaths[0]}" alt="${product.name}" class="product-image" 
+                         onerror="this.src='https://via.placeholder.com/250x180?text=Image+Not+Found'">
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-seller">🚜 ${product.seller} - ${product.location}</div>
+                        <div class="product-price">${formatPrice(product.price)}/${product.unit}</div>
+                        <div class="product-stock">Stock: ${product.stock} ${product.unit}</div>
+                        <div class="product-details">
+                            <div>Category: ${categoryTranslations[product.category]}</div>
+                            <div>${product.description}</div>
+                            <div>Contact: ${product.phone}</div>
+                        </div>
+                        <div class="quantity-selector">
+                            <label for="quantity-${product.id}">Qty:</label>
+                            <input type="number" id="quantity-${product.id}" min="1" max="${product.stock}" value="1">
+                        </div>
+                        <button class="btn btn-cart" onclick="addToCart('${product.id}')" 
+                                ${product.stock === 0 ? 'disabled' : ''}>
+                            ${product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+                        </button>
+                        <button class="btn btn-order" onclick="orderNow('${product.id}')"
+                                ${product.stock === 0 ? 'disabled' : ''}>
+                            📦 Order Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            const pageMap = {
+                'dashboard': 'dashboard_customer.html',
+                'orders': 'orders.html',
+                'favorites': 'favorites.html',
+                'cart': 'cart.html',
+                'profile': 'profile.html'
+            };
+            if (pageMap[page]) {
+                window.location.href = pageMap[page];
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                try {
+                    await auth.signOut();
+                    showAlert('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } catch (error) {
+                    showAlert('Error logging out: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                if (appData.currentUser.role !== 'client') {
+                    showAlert('Access restricted to customers.', 'error');
+                    setTimeout(() => {
+                        window.location.href = appData.currentUser.role === 'supplier' ? 'dashboard_supplier.html' : 'login.html';
+                    }, 1500);
+                    return;
+                }
+                await loadCart(uid);
+                await loadFavorites(uid);
+            } catch (error) {
+                showAlert('Error initializing app: ' + error.message, 'error');
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>

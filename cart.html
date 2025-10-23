@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart - AgriWie</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+
+        .cart-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        .cart-items {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-image {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-seller {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-price {
+            font-size: 1.1em;
+            color: #2d8659;
+            font-weight: bold;
+        }
+
+        .item-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #2d8659;
+            background: white;
+            color: #2d8659;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+
+        .quantity-btn:hover {
+            background: #2d8659;
+            color: white;
+        }
+
+        .quantity-display {
+            width: 60px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .remove-btn {
+            padding: 8px 16px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .remove-btn:hover {
+            background: #e64a19;
+        }
+
+        .cart-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .summary-row.total {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d8659;
+            padding-top: 1rem;
+            border-top: 2px solid #e0e0e0;
+            margin-top: 1rem;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: #2d8659;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-top: 1.5rem;
+            transition: background 0.3s;
+        }
+
+        .checkout-btn:hover {
+            background: #236b47;
+        }
+
+        .checkout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .continue-shopping {
+            width: 100%;
+            padding: 15px;
+            background: white;
+            color: #2d8659;
+            border: 2px solid #2d8659;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .continue-shopping:hover {
+            background: #f0f8f4;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+
+        .empty-cart-icon {
+            font-size: 5em;
+            margin-bottom: 1rem;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        @media (max-width: 768px) {
+            .cart-container {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-item {
+                grid-template-columns: 1fr;
+            }
+
+            .item-image {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="window.location.href='dashboard_customer.html'">🌾 AgriWie</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alert" class="alert"></div>
+        <h1 class="page-title">My Cart</h1>
+
+        <div id="cartContainer"></div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.firebasestorage.app",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // App Data
+        const appData = {
+            cart: [],
+            currentUser: null
+        };
+
+        // Get Current User
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    unsubscribe();
+                    if (user) {
+                        appData.currentUser = { uid: user.uid };
+                        resolve(user.uid);
+                    } else {
+                        window.location.href = 'login.html';
+                        reject('Not authenticated');
+                    }
+                });
+            });
+        }
+
+        // Load Cart from Firestore
+        async function loadCart(uid) {
+            try {
+                const cartSnapshot = await db.collection('users').doc(uid).collection('cart').get();
+                appData.cart = cartSnapshot.docs.map(doc => doc.data());
+                renderCart();
+            } catch (error) {
+                showAlert('Error loading cart: ' + error.message, 'error');
+            }
+        }
+
+        // Save Cart to Firestore
+        async function saveCart(uid) {
+            try {
+                const batch = db.batch();
+                const oldCart = await db.collection('users').doc(uid).collection('cart').get();
+                oldCart.docs.forEach(doc => batch.delete(doc.ref));
+                appData.cart.forEach(item => {
+                    batch.set(db.collection('users').doc(uid).collection('cart').doc(item.productId), item);
+                });
+                await batch.commit();
+            } catch (error) {
+                showAlert('Error saving cart: ' + error.message, 'error');
+            }
+        }
+
+        // Save Order to Firestore
+        async function saveOrder(uid, order) {
+            try {
+                await db.collection('users').doc(uid).collection('orders').add(order);
+            } catch (error) {
+                showAlert('Error saving order: ' + error.message, 'error');
+            }
+        }
+
+        // Format Price
+        function formatPrice(price) {
+            return `${price.toFixed(2)} TND`;
+        }
+
+        // Show Alert
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
+        }
+
+        // Update Quantity
+        async function updateQuantity(productId, change) {
+            try {
+                const uid = appData.currentUser.uid;
+                const item = appData.cart.find(i => i.productId === productId);
+                if (!item) return;
+
+                const newQuantity = item.quantity + change;
+                if (newQuantity < 1) {
+                    showAlert('Quantity cannot be less than 1', 'error');
+                    return;
+                }
+                if (newQuantity > item.stock) {
+                    showAlert('Quantity cannot exceed available stock', 'error');
+                    return;
+                }
+
+                item.quantity = newQuantity;
+                await saveCart(uid);
+                renderCart();
+                showAlert('Quantity updated', 'success');
+            } catch (error) {
+                showAlert('Error updating quantity: ' + error.message, 'error');
+            }
+        }
+
+        // Remove Item
+        async function removeItem(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                if (confirm('Remove this item from cart?')) {
+                    const index = appData.cart.findIndex(i => i.productId === productId);
+                    if (index > -1) {
+                        appData.cart.splice(index, 1);
+                        await saveCart(uid);
+                        renderCart();
+                        showAlert('Item removed from cart', 'success');
+                    }
+                }
+            } catch (error) {
+                showAlert('Error removing item: ' + error.message, 'error');
+            }
+        }
+
+        // Calculate Total
+        function calculateTotal() {
+            return appData.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        }
+
+        // Checkout
+        async function checkout() {
+            try {
+                const uid = appData.currentUser.uid;
+                if (appData.cart.length === 0) return;
+
+                if (confirm('Proceed to checkout?')) {
+                    const order = {
+                        id: 'ORD' + Date.now(),
+                        date: new Date().toISOString(),
+                        products: appData.cart.map(item => ({
+                            productId: item.productId,
+                            name: item.productName,
+                            quantity: item.quantity,
+                            unit: item.unit,
+                            price: item.price
+                        })),
+                        total: calculateTotal(),
+                        status: 'pending'
+                    };
+
+                    await saveOrder(uid, order);
+                    appData.cart = [];
+                    await saveCart(uid);
+                    renderCart();
+                    showAlert('Order placed successfully!', 'success');
+                }
+            } catch (error) {
+                showAlert('Error during checkout: ' + error.message, 'error');
+            }
+        }
+
+        // Render Cart
+        function renderCart() {
+            const container = document.getElementById('cartContainer');
+
+            if (appData.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="cart-items">
+                        <div class="empty-cart">
+                            <div class="empty-cart-icon">🛒</div>
+                            <h2>Your cart is empty</h2>
+                            <p>Add some products to get started!</p>
+                            <button class="checkout-btn" onclick="window.location.href='dashboard_customer.html'" style="margin-top: 2rem;">
+                                Continue Shopping
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const total = calculateTotal();
+            const itemCount = appData.cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            container.innerHTML = `
+                <div class="cart-container">
+                    <div class="cart-items">
+                        ${appData.cart.map(item => `
+                            <div class="cart-item">
+                                <img src="${item.image}" alt="${item.productName}" class="item-image">
+                                <div class="item-details">
+                                    <div class="item-name">${item.productName}</div>
+                                    <div class="item-seller">🚜 ${item.seller} - ${item.location}</div>
+                                    <div class="item-price">${formatPrice(item.price)}/${item.unit}</div>
+                                </div>
+                                <div class="item-actions">
+                                    <div class="quantity-control">
+                                        <button class="quantity-btn" onclick="updateQuantity('${item.productId}', -1)">-</button>
+                                        <span class="quantity-display">${item.quantity}</span>
+                                        <button class="quantity-btn" onclick="updateQuantity('${item.productId}', 1)">+</button>
+                                    </div>
+                                    <div style="font-weight: 600; color: #2d8659;">
+                                        ${formatPrice(item.price * item.quantity)}
+                                    </div>
+                                    <button class="remove-btn" onclick="removeItem('${item.productId}')">Remove</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="cart-summary">
+                        <div class="summary-title">Order Summary</div>
+                        <div class="summary-row">
+                            <span>Items (${itemCount})</span>
+                            <span>${formatPrice(total)}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Delivery</span>
+                            <span>Free</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span>${formatPrice(total)}</span>
+                        </div>
+                        <button class="checkout-btn" onclick="checkout()">
+                            Proceed to Checkout
+                        </button>
+                        <button class="continue-shopping" onclick="window.location.href='dashboard_customer.html'">
+                            Continue Shopping
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                await loadCart(uid);
+            } catch (error) {
+                showAlert('Error initializing app: ' + error.message, 'error');
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
+

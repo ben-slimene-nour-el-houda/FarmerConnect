@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Customer Space - AgriWie</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d8659;
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff5722;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6em;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .user-menu:hover {
+            background: #f0f0f0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d8659;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .sidebar h3 {
+            color: #2d8659;
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: #f0f8f4;
+        }
+
+        .menu-item.active {
+            background: #2d8659;
+            color: white;
+        }
+
+        .logout-btn {
+            margin-top: 2rem;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #2d8659 0%, #1a5c3d 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-banner h1 {
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2.5em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d8659;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .product-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-farmer {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            font-size: 1.3em;
+            color: #2d8659;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-details {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 1rem;
+        }
+
+        .product-stock {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .quantity-selector input {
+            width: 60px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .add-to-cart-btn, .favorite-btn, .order-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .add-to-cart-btn {
+            background: #2d8659;
+            color: white;
+        }
+
+        .add-to-cart-btn:hover {
+            background: #236b47;
+        }
+
+        .favorite-btn {
+            background: #ff5722;
+            color: white;
+        }
+
+        .favorite-btn:hover {
+            background: #e64a19;
+        }
+
+        .order-btn {
+            background: #1976d2;
+            color: white;
+        }
+
+        .order-btn:hover {
+            background: #1565c0;
+        }
+
+        .add-to-cart-btn:disabled, .order-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .orders-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .orders-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-delivered {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-transit {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            position: relative;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .alert-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="navigateTo('dashboard')" role="button" tabindex="0" aria-label="Go to Dashboard">🌾 AgriWie</div>
+            <div class="header-right">
+                <div class="cart-icon" onclick="navigateTo('cart')" role="button" tabindex="0" aria-label="View Cart">
+                    🛒
+                    <span id="cartBadge" class="cart-badge">0</span>
+                </div>
+                <div class="user-menu" role="button" tabindex="0" aria-label="User Menu">
+                    <div class="user-avatar" id="userAvatar"></div>
+                    <span id="userName"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <h3>My Space</h3>
+            <div class="menu-item active" onclick="navigateTo('dashboard')" data-page="dashboard" role="button" tabindex="0" aria-label="Dashboard">🏠 Dashboard</div>
+            <div class="menu-item" onclick="navigateTo('orders')" data-page="orders" role="button" tabindex="0" aria-label="Orders">📦 Orders</div>
+            <div class="menu-item" onclick="navigateTo('favorites')" data-page="favorites" role="button" tabindex="0" aria-label="Favorites">❤️ Favorites</div>
+            <div class="menu-item" onclick="navigateTo('cart')" data-page="cart" role="button" tabindex="0" aria-label="Cart">🛒 Cart</div>
+            <div class="menu-item" onclick="navigateTo('profile')" data-page="profile" role="button" tabindex="0" aria-label="Profile">👤 Profile</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        <div class="main-content">
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()">✖</button>
+            </div>
+            <div class="welcome-banner">
+                <h1>Welcome, <span id="userNameMain"></span>!</h1>
+                <p>Discover our fresh products and manage your orders.</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value" id="totalOrders">0</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🚚</div>
+                    <div class="stat-value" id="inProgressOrders">0</div>
+                    <div class="stat-label">Orders in Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-value" id="favorites">0</div>
+                    <div class="stat-label">Favorites</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💶</div>
+                    <div class="stat-value" id="totalSpent">0 TND</div>
+                    <div class="stat-label">Total Spent</div>
+                </div>
+            </div>
+            <div class="section-title">
+                <span>Available Products</span>
+            </div>
+            <div id="productsGrid" class="products-grid"></div>
+            <div class="section-title">Recent Orders</div>
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Products</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr><td colspan="5">No recent orders.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOu3SluP6IWLU8FmVI7-WdPOwokpFHDRE",
+            authDomain: "wie-act.firebaseapp.com",
+            projectId: "wie-act",
+            storageBucket: "wie-act.firebasestorage.app",
+            messagingSenderId: "99125947461",
+            appId: "1:99125947461:web:96167805327e6a2a78472c",
+            measurementId: "G-Q54B9E9KDV"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TND' });
+
+        // Static Products Data
+        const appData = {
+            currentUser: null,
+            cart: [],
+            favorites: [],
+            orders: [],
+            products: [
+                {
+                    id: 'prod1',
+                    name: 'طماطم',
+                    price: 1.50,
+                    stock: 100,
+                    unit: 'كلغ',
+                    category: 'منتوجات فلاحية',
+                    description: 'طماطم طازة من فلاحين محليين',
+                    seller: 'أحمد بن علي',
+                    phone: '+216 20 123 456',
+                    location: 'نابل',
+
+                    imagePaths: ['https://www.ecoledagriculture.fr/wp-content/uploads/2025/08/pied-tomates-1024x574.jpg'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod2',
+                    name: 'زيت نضوح',
+                    price: 20.00,
+                    stock: 50,
+                    unit: 'لتر',
+                    category: 'منتوجات فلاحية',
+                    description: 'زيت زيتونة بنين وحرّ',
+                    seller: 'فاطمة منصور',
+                    phone: '+216 22 456 789',
+                    location: 'صفاقس',
+
+                    imagePaths: ['data:image/jpeg;base64,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'],
+                    date: new Date().toISOString()
+                },
+                {
+                    id: 'prod3',
+                    name: 'عظم عربي',
+                    price: 2.00,
+                    stock: 200,
+                    unit: 'حارة',
+                    category: 'منتوجات حيوانية',
+                    description: 'عظم عربي بلدي حرّ',
+                    seller: 'محمد الترابلسي',
+                    phone: '+216 25 789 012',
+                    location: 'بنزرت',
+
+                    imagePaths: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQogKK2iMWv9fhN1ZzQn7TWqsFNCy_PYQO--9ZdinKAFVY_thLWh48H_Mh9VTz2j_ZSq-o&usqp=CAU'],
+                    date: new Date().toISOString()
+                }
+                
+                
+            ]
+        };
+
+        const categoryTranslations = {
+            seeds: "Seeds",
+            tools: "Tools",
+            animal_food: "Animal Feed",
+            fertilizers: "Fertilizers",
+            pesticides: "Pesticides",
+            irrigation: "Irrigation Tools",
+            animals: "Animals",
+            crops: "Crops",
+            animalproduct: "Animal Products",
+            other: "Other"
+        };
+
+        // Get Current User
+        async function getCurrentUser() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                    unsubscribe();
+                    if (user) {
+                        try {
+                            const userDoc = await db.collection('users').doc(user.uid).get();
+                            if (!userDoc.exists) {
+                                throw new Error('User data not found in Firestore');
+                            }
+                            const userData = userDoc.data();
+                            appData.currentUser = {
+                                uid: user.uid,
+                                prenom: userData.prenom || 'User',
+                                nom: userData.nom || '',
+                                role: userData.role || 'client'
+                            };
+                            document.getElementById('userName').textContent = `${appData.currentUser.prenom} ${appData.currentUser.nom}`;
+                            document.getElementById('userAvatar').textContent = appData.currentUser.prenom.charAt(0) + (appData.currentUser.nom ? appData.currentUser.nom.charAt(0) : '');
+                            document.getElementById('userNameMain').textContent = appData.currentUser.prenom;
+                            if (appData.currentUser.role !== 'client') {
+                                showAlert('Access restricted to customers.', 'error');
+                                setTimeout(() => {
+                                    window.location.href = appData.currentUser.role === 'supplier' ? 'dashboard_fournisseur.html' : 'login.html';
+                                }, 1500);
+                                reject('Unauthorized role');
+                                return;
+                            }
+                            resolve(user.uid);
+                        } catch (error) {
+                            showAlert('Error fetching user data: ' + error.message, 'error');
+                            setTimeout(() => {
+                                window.location.href = 'login.html';
+                            }, 1500);
+                            reject(error);
+                        }
+                    } else {
+                        showAlert('You must be logged in.', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                        reject('Not authenticated');
+                    }
+                });
+            });
+        }
+
+        // Load User Data from Firestore
+        async function loadUserData(uid) {
+            try {
+                const cartSnapshot = await db.collection('users').doc(uid).collection('cart').get();
+                appData.cart = cartSnapshot.docs.map(doc => doc.data());
+
+                const favSnapshot = await db.collection('users').doc(uid).collection('favorites').get();
+                appData.favorites = favSnapshot.docs.map(doc => doc.id);
+
+                const ordersSnapshot = await db.collection('users').doc(uid).collection('orders').get();
+                appData.orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                setupRealtimeListeners(uid);
+                loadProducts();
+                loadOrders();
+                updateStats();
+            } catch (error) {
+                showAlert('Error loading user data: ' + error.message, 'error');
+            }
+        }
+
+        // Setup Realtime Listeners
+        function setupRealtimeListeners(uid) {
+            db.collection('users').doc(uid).collection('cart').onSnapshot((snapshot) => {
+                appData.cart = snapshot.docs.map(doc => doc.data());
+                updateCartBadge();
+                updateStats();
+            });
+
+            db.collection('users').doc(uid).collection('favorites').onSnapshot((snapshot) => {
+                appData.favorites = snapshot.docs.map(doc => doc.id);
+                loadProducts();
+                updateStats();
+            });
+
+            db.collection('users').doc(uid).collection('orders').onSnapshot((snapshot) => {
+                appData.orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                loadOrders();
+                updateStats();
+            });
+        }
+
+        // Save Cart to Firestore
+        async function saveCart(uid) {
+            try {
+                const batch = db.batch();
+                const oldCart = await db.collection('users').doc(uid).collection('cart').get();
+                oldCart.docs.forEach(doc => batch.delete(doc.ref));
+                appData.cart.forEach(item => {
+                    batch.set(db.collection('users').doc(uid).collection('cart').doc(item.productId), item);
+                });
+                await batch.commit();
+            } catch (error) {
+                showAlert('Error saving cart: ' + error.message, 'error');
+            }
+        }
+
+        // Save Favorites to Firestore
+        async function saveFavorites(uid) {
+            try {
+                const batch = db.batch();
+                const oldFav = await db.collection('users').doc(uid).collection('favorites').get();
+                oldFav.docs.forEach(doc => batch.delete(doc.ref));
+                appData.favorites.forEach(id => {
+                    batch.set(db.collection('users').doc(uid).collection('favorites').doc(id), { productId: id });
+                });
+                await batch.commit();
+            } catch (error) {
+                showAlert('Error saving favorites: ' + error.message, 'error');
+            }
+        }
+
+        // Save Order to Firestore
+        async function saveOrder(uid, order) {
+            try {
+                await db.collection('users').doc(uid).collection('orders').add(order);
+            } catch (error) {
+                showAlert('Error saving order: ' + error.message, 'error');
+            }
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            const pageMap = {
+                'dashboard': 'dashboard_customer.html',
+                'orders': 'orders.html',
+                'favorites': 'favorites.html',
+                'cart': 'cart.html',
+                'profile': 'profile.html'
+            };
+            if (pageMap[page]) {
+                window.location.href = pageMap[page];
+            }
+        }
+
+        // Alert Functions
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 4000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        function formatPrice(price) {
+            return formatter.format(price);
+        }
+
+        // Load Products
+        function loadProducts() {
+            const productsGrid = document.getElementById('productsGrid');
+            productsGrid.innerHTML = '';
+
+            appData.products.forEach(product => {
+                const isFavorite = appData.favorites.includes(product.id);
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <img src="${product.imagePaths[0]}" alt="${product.name}" class="product-image" 
+                         onerror="this.src='https://via.placeholder.com/250x180?text=Image+Not+Found'">
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-farmer">🚜 ${product.seller} - ${product.location}</div>
+                        <div class="product-price">${formatPrice(product.price)}/${product.unit}</div>
+                        <div class="product-stock">Stock: ${product.stock} ${product.unit}</div>
+                        <div class="product-details">
+                            <div>Category: ${categoryTranslations[product.category]}</div>
+                            <div>${product.description}</div>
+                            <div>Contact: ${product.phone}</div>
+                        </div>
+                        <div class="quantity-selector">
+                            <label for="quantity-${product.id}">Qty:</label>
+                            <input type="number" id="quantity-${product.id}" min="1" max="${product.stock}" value="1">
+                        </div>
+                        <button class="add-to-cart-btn" onclick="addToCart('${product.id}')" ${product.stock === 0 ? 'disabled' : ''}>
+                            ${product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+                        </button>
+                        <button class="favorite-btn" onclick="toggleFavorite('${product.id}')">
+                            ${isFavorite ? '💚 In Favorites' : '❤️ Add to Favorites'}
+                        </button>
+                        <button class="order-btn" onclick="orderNow('${product.id}')" ${product.stock === 0 ? 'disabled' : ''}>
+                            📦 Order Now
+                        </button>
+                    </div>
+                `;
+                productsGrid.appendChild(productCard);
+            });
+
+            updateCartBadge();
+            updateStats();
+        }
+
+        // Add to Cart
+        async function addToCart(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                const product = appData.products.find(p => p.id === productId);
+                const quantityInput = document.getElementById(`quantity-${productId}`);
+                const quantity = parseInt(quantityInput.value);
+
+                if (!product || quantity < 1 || quantity > product.stock) {
+                    showAlert('Invalid quantity', 'error');
+                    return;
+                }
+
+                const existingItem = appData.cart.find(item => item.productId === productId);
+                if (existingItem) {
+                    existingItem.quantity += quantity;
+                } else {
+                    appData.cart.push({
+                        productId: productId,
+                        productName: product.name,
+                        quantity: quantity,
+                        price: product.price,
+                        unit: product.unit,
+                        seller: product.seller,
+                        location: product.location,
+                        image: product.imagePaths[0],
+                        stock: product.stock
+                    });
+                }
+
+                await saveCart(uid);
+                showAlert(`${product.name} (${quantity} ${product.unit}) added to cart!`, 'success');
+            } catch (error) {
+                showAlert('Error adding to cart: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle Favorite
+        async function toggleFavorite(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                const index = appData.favorites.indexOf(productId);
+                if (index > -1) {
+                    appData.favorites.splice(index, 1);
+                    showAlert('Removed from favorites', 'success');
+                } else {
+                    appData.favorites.push(productId);
+                    showAlert('Added to favorites!', 'success');
+                }
+                await saveFavorites(uid);
+                loadProducts();
+            } catch (error) {
+                showAlert('Error updating favorites: ' + error.message, 'error');
+            }
+        }
+
+        // Order Now
+        async function orderNow(productId) {
+            try {
+                const uid = appData.currentUser.uid;
+                const product = appData.products.find(p => p.id === productId);
+                const quantityInput = document.getElementById(`quantity-${productId}`);
+                const quantity = parseInt(quantityInput.value);
+
+                if (!product || quantity < 1 || quantity > product.stock) {
+                    showAlert('Invalid quantity', 'error');
+                    return;
+                }
+
+                if (confirm(`Confirm order of ${quantity} ${product.unit} of ${product.name}?`)) {
+                    const order = {
+                        id: 'ORD' + Date.now(),
+                        date: new Date().toISOString(),
+                        products: [{
+                            productId: product.id,
+                            name: product.name,
+                            quantity: quantity,
+                            unit: product.unit,
+                            price: product.price
+                        }],
+                        total: product.price * quantity,
+                        status: 'pending'
+                    };
+
+                    await saveOrder(uid, order);
+
+                    const cartIndex = appData.cart.findIndex(item => item.productId === productId);
+                    if (cartIndex > -1) {
+                        appData.cart.splice(cartIndex, 1);
+                        await saveCart(uid);
+                    }
+
+                    showAlert(`Order placed successfully! ID: ${order.id}`, 'success');
+                    loadProducts();
+                    loadOrders();
+                }
+            } catch (error) {
+                showAlert('Error placing order: ' + error.message, 'error');
+            }
+        }
+
+        // Update Cart Badge
+        function updateCartBadge() {
+            const totalItems = appData.cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartBadge').textContent = totalItems;
+        }
+
+        // Update Stats
+        function updateStats() {
+            const totalOrders = appData.orders.length;
+            const inProgressOrders = appData.orders.filter(o => o.status === 'pending' || o.status === 'transit').length;
+            const totalSpent = appData.orders.reduce((sum, order) => sum + order.total, 0);
+
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('inProgressOrders').textContent = inProgressOrders;
+            document.getElementById('favorites').textContent = appData.favorites.length;
+            document.getElementById('totalSpent').textContent = formatPrice(totalSpent);
+        }
+
+        // Load Orders
+        function loadOrders() {
+            const ordersTableBody = document.getElementById('ordersTableBody');
+            ordersTableBody.innerHTML = '';
+
+            if (appData.orders.length === 0) {
+                ordersTableBody.innerHTML = '<tr><td colspan="5">No recent orders.</td></tr>';
+                return;
+            }
+
+            const recentOrders = appData.orders.slice(0, 5);
+            recentOrders.forEach(order => {
+                const productNames = order.products.map(p => `${p.name} (${p.quantity} ${p.unit})`).join(', ');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${new Date(order.date).toLocaleDateString('en-US')}</td>
+                    <td>${productNames}</td>
+                    <td>${formatPrice(order.total)}</td>
+                    <td><span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                `;
+                ordersTableBody.appendChild(row);
+            });
+        }
+
+        // Logout
+        async function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                try {
+                    await auth.signOut();
+                    showAlert('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } catch (error) {
+                    showAlert('Error logging out: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                const uid = await getCurrentUser();
+                await loadUserData(uid);
+            } catch (error) {
+                showAlert('Error initializing app: ' + error.message, 'error');
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
