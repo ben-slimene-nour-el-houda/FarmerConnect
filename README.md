@@ -36,4 +36,4 @@ To create a digital ecosystem that simplifies interactions between suppliers, fa
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/ben-slimene-nour-el-houda/farmerconnect.git
+   git clone https://github.com/ben-slimene-nour-el-houda/FarmerConnect.git
