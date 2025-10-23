@@ -20,7 +20,8 @@ It allows suppliers to sell their products to farmers, and clients to buy fresh 
 ## 🛠️ Technologies Used
 
 - **HTML5**  
-- **CSS3**  
+- **CSS3**
+- **JavaScript**
 - **Firebase Authentication**  
 - **Firebase Firestore Database**
 
