@@ -42,7 +42,7 @@ Built with a "Design-First" philosophy featuring:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -94,5 +94,4 @@ FarmerConnect/
 
 <div align="center">
   <p>Built with ❤️ for the Agricultural Community</p>
-  <p><b>© 2025 AgriWie. All rights reserved.</b></p>
 </div>
